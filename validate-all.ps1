@@ -3,7 +3,7 @@
 # Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
 # Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
 # =====================================================================
-# Master Portfolio Compliance & IP Validator (Runs All 6 Stage Audits)
+# Master Portfolio Compliance & IP Validator (Runs All 9 Module Audits)
 # =====================================================================
 $ErrorActionPreference = 'Stop'
 
@@ -13,11 +13,14 @@ $Stages = @(
     "03-azure-az104-hybrid-vnet",
     "04-aws-saa-three-tier-ha",
     "05-terraform-modular-pipeline",
-    "06-cka-kubernetes-chaos-cluster"
+    "06-cka-kubernetes-chaos-cluster",
+    "07-sre-observability-golden-signals",
+    "08-cks-devsecops-gitops-supply-chain",
+    "09-zero-trust-secops-vault-autoremediation-ot"
 )
 
 Write-Host "=====================================================================" -ForegroundColor Yellow
-Write-Host "  EXECUTING FULL 6-STAGE ENTERPRISE PORTFOLIO & IP COMPLIANCE AUDIT  " -ForegroundColor Yellow
+Write-Host "  EXECUTING FULL 9-MODULE ENTERPRISE PORTFOLIO & IP COMPLIANCE AUDIT " -ForegroundColor Yellow
 Write-Host "=====================================================================" -ForegroundColor Yellow
 
 foreach ($Stage in $Stages) {
@@ -26,5 +29,5 @@ foreach ($Stage in $Stages) {
 }
 
 Write-Host "`n=====================================================================" -ForegroundColor Green
-Write-Host "  ALL 6 CERTIFICATION STAGES (44/44 CHECKS) PASSED & VERIFIED!       " -ForegroundColor Green
+Write-Host "  ALL 9 ENTERPRISE MODULES (65/65 CHECKS) PASSED & VERIFIED!         " -ForegroundColor Green
 Write-Host "=====================================================================" -ForegroundColor Green

@@ -1,0 +1,9 @@
+{
+  "applicationName": "zero-trust-payment-svc",
+  "targetNamespace": "production-payments",
+  "gitRepoUrl": "https://github.com/Phlotonic/home-lab-templates-portfolio.git",
+  "targetRevision": "main",
+  "containerRegistry": "ghcr.io/phlotonic",
+  "trivySeverityGate": "CRITICAL,HIGH",
+  "validationFailureAction": "Enforce"
+}

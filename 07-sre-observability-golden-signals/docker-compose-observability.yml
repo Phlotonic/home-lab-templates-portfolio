@@ -1,0 +1,49 @@
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+version: '3.9'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: sre-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./slo-recording-rules.yml:/etc/prometheus/slo-recording-rules.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: sre-alertmanager
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: sre-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: sre-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=sreadmin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+    restart: unless-stopped

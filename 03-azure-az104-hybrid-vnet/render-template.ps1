@@ -3,7 +3,8 @@
 # Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
 # Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
 # =====================================================================
-# Reusable Template Renderer — Lab 3 (Azure AZ-104 Multi-Region Hybrid VNet)
+# Reusable Template Renderer — Module 03 (Azure AZ-104 Hybrid VNet)
+# Dynamically synchronizes template-variables.json into main.bicep
 # =====================================================================
 param(
     [string]$VariablesFile = (Join-Path $PSScriptRoot "template-variables.json")
@@ -12,8 +13,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $Vars = Get-Content $VariablesFile -Raw | ConvertFrom-Json
 
-Write-Host "Rendering Azure AZ-104 Multi-Region Bicep Parameters..." -ForegroundColor Cyan
-Write-Host "  -> Hub Region   : $($Vars.primaryLocation) ($($Vars.hubVnetCidr))"
-Write-Host "  -> Spoke Region : $($Vars.secondaryLocation) ($($Vars.spokeVnetCidr))"
-Write-Host "  -> VM SKU       : $($Vars.vmSize) (Zero Public IP behind Azure Bastion)"
-Write-Host "Azure Bicep template parameters verified." -ForegroundColor Green
+$BicepFile = Join-Path $PSScriptRoot "main.bicep"
+if (Test-Path $BicepFile) {
+    $Raw = Get-Content $BicepFile -Raw
+    $Updated = $Raw -replace "param primaryLocation string = '\S+'", "param primaryLocation string = '$($Vars.primaryLocation)'" `
+                    -replace "param secondaryLocation string = '\S+'", "param secondaryLocation string = '$($Vars.secondaryLocation)'" `
+                    -replace "param adminUsername string = '\S+'", "param adminUsername string = '$($Vars.adminUsername)'" `
+                    -replace "vmSize: '\S+'", "vmSize: '$($Vars.vmSize)'"
+    Set-Content -Path $BicepFile -Value $Updated -NoNewline
+}
+
+Write-Host "[MOD-03] Rendered Azure Bicep template for regions '$($Vars.primaryLocation)' <-> '$($Vars.secondaryLocation)'." -ForegroundColor Green

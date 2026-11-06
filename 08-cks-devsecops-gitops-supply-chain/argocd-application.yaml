@@ -1,0 +1,36 @@
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zero-trust-payment-svc
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Phlotonic/home-lab-templates-portfolio.git'
+    targetRevision: main
+    path: 06-cka-kubernetes-chaos-cluster
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: production-payments
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

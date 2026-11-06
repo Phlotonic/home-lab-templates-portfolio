@@ -1,0 +1,62 @@
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-pod-security-baseline
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: disallow-privileged-and-require-non-root
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "CKS Policy Violation: Containers must run as non-root with read-only root filesystem and privileged=false."
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+            containers:
+              - securityContext:
+                  privileged: false
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: true
+                  capabilities:
+                    drop:
+                      - ALL
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-cosign-image-signatures
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verify-keyless-github-oidc-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - production-payments
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/phlotonic/*"
+          attestors:
+            - count: 1
+              entries:
+                - keyless:
+                    subject: "https://github.com/Phlotonic/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev

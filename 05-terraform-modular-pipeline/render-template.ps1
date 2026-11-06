@@ -3,7 +3,8 @@
 # Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
 # Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
 # =====================================================================
-# Reusable Template Renderer — Lab 5 (HashiCorp Terraform Modular Pipeline)
+# Reusable Template Renderer — Module 05 (Terraform Modular Pipeline)
+# Dynamically synchronizes template-variables.json into tfvars.example
 # =====================================================================
 param(
     [string]$VariablesFile = (Join-Path $PSScriptRoot "template-variables.json")
@@ -12,8 +13,19 @@ param(
 $ErrorActionPreference = 'Stop'
 $Vars = Get-Content $VariablesFile -Raw | ConvertFrom-Json
 
-Write-Host "Rendering Terraform Multi-Module Parameters..." -ForegroundColor Cyan
-Write-Host "  -> Environment : $($Vars.envPrefix) ($($Vars.awsRegion))"
-Write-Host "  -> VPC CIDR    : $($Vars.vpcCidr)"
-Write-Host "  -> State Lock  : s3://$($Vars.stateBucket) + DynamoDB '$($Vars.lockDynamoDbTable)'"
-Write-Host "Terraform modular template parameters verified." -ForegroundColor Green
+$TfVarsFile = Join-Path $PSScriptRoot "terraform.tfvars.example"
+$RenderedTfVars = @"
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+aws_region         = "$($Vars.awsRegion)"
+env_prefix         = "$($Vars.envPrefix)"
+vpc_cidr           = "$($Vars.vpcCidr)"
+allowed_ingress_ip = "$($Vars.allowedIngressIp)"
+instance_type      = "$($Vars.instanceType)"
+"@
+Set-Content -Path $TfVarsFile -Value $RenderedTfVars
+
+Write-Host "[MOD-05] Rendered Terraform variables for environment '$($Vars.envPrefix)' in '$TfVarsFile'." -ForegroundColor Green

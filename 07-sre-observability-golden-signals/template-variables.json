@@ -1,0 +1,10 @@
+{
+  "serviceName": "core-checkout-api",
+  "sloAvailabilityTarget": "0.999",
+  "errorBudgetRatio": "0.001",
+  "scrapeInterval": "15s",
+  "evaluationInterval": "15s",
+  "prometheusRetention": "15d",
+  "fastBurnMultiplier": 14.4,
+  "slowBurnMultiplier": 6.0
+}

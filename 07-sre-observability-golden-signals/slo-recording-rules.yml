@@ -1,0 +1,80 @@
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+# Google SRE Multi-Window, Multi-Burn-Rate SLO & Golden Signal Rules
+# Target Availability SLO: 99.9% (30-Day Error Budget = 0.001 / 43.2m)
+# =====================================================================
+groups:
+  - name: sre_golden_signals_recording
+    interval: 30s
+    rules:
+      # 1. Traffic (Requests per Second)
+      - record: job:http_requests_total:rate5m
+        expr: sum by (job) (rate(http_requests_total[5m]))
+
+      # 2. Errors (5xx Error Ratio Across Multi-Windows: 5m, 30m, 1h, 6h)
+      - record: job:http_requests_errors:ratio_rate5m
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum by (job) (rate(http_requests_total[5m]))
+
+      - record: job:http_requests_errors:ratio_rate30m
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[30m]))
+          /
+          sum by (job) (rate(http_requests_total[30m]))
+
+      - record: job:http_requests_errors:ratio_rate1h
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[1h]))
+          /
+          sum by (job) (rate(http_requests_total[1h]))
+
+      - record: job:http_requests_errors:ratio_rate6h
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[6h]))
+          /
+          sum by (job) (rate(http_requests_total[6h]))
+
+      # 3. Latency (p99 Request Duration in Seconds)
+      - record: job:http_request_duration_seconds:p99_5m
+        expr: |
+          histogram_quantile(0.99, sum by (le, job) (rate(http_request_duration_seconds_bucket[5m])))
+
+      # 4. Saturation (Node Memory & CPU Utilization Ratio)
+      - record: instance:node_memory_utilization:ratio
+        expr: |
+          1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+
+  - name: sre_multi_window_slo_burn_alerts
+    rules:
+      # Fast Burn Page Alert (14.4x Burn Rate over both 1h and 5m windows -> 2% budget consumed in 1h)
+      - alert: HighErrorBudgetBurnPage
+        expr: |
+          job:http_requests_errors:ratio_rate1h > (14.4 * 0.001)
+          and
+          job:http_requests_errors:ratio_rate5m > (14.4 * 0.001)
+        for: 2m
+        labels:
+          severity: critical
+          slo_tier: tier_1
+        annotations:
+          summary: "CRITICAL SLO Burn Rate (14.4x) on {{ $labels.job }}"
+          description: "Service {{ $labels.job }} is burning 30-day 99.9% error budget at >14.4x across 1h and 5m windows."
+
+      # Slow Burn Ticket Alert (6.0x Burn Rate over both 6h and 30m windows -> 5% budget consumed in 6h)
+      - alert: ModerateErrorBudgetBurnTicket
+        expr: |
+          job:http_requests_errors:ratio_rate6h > (6.0 * 0.001)
+          and
+          job:http_requests_errors:ratio_rate30m > (6.0 * 0.001)
+        for: 15m
+        labels:
+          severity: warning
+          slo_tier: tier_1
+        annotations:
+          summary: "Elevated SLO Burn Rate (6.0x) on {{ $labels.job }}"
+          description: "Service {{ $labels.job }} is burning 30-day error budget at >6x across 6h and 30m windows."

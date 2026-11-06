@@ -1,0 +1,9 @@
+{
+  "vaultDynamicDbRole": "prod-app-ephemeral-readonly",
+  "defaultLeaseTtl": "1h",
+  "maxLeaseTtl": "24h",
+  "s3AutoRemediationSlaSeconds": 5,
+  "otWireGuardSubnet": "10.99.0.0/30",
+  "mqttBrokerPort": 8883,
+  "iec62443Zone": "Level-3.5-IDMZ"
+}
