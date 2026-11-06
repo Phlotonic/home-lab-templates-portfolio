@@ -1,26 +1,28 @@
-# Lab 5 (HashiCorp Terraform Associate): Explain It Simply & Interview Guide
+# Module 05 (HashiCorp Terraform Associate): Multi-Module IaC Pipeline with S3/DynamoDB State Locking & Keyless OIDC CI
 
-## 1. Your 30-Second Plain-English Pitch (For Interviews & Clients)
-> *"Instead of writing a monolithic Terraform file, I refactored the infrastructure into three reusable child modules—`networking`, `security`, and `compute`—wired together through strongly typed outputs and parameterized via `terraform.tfvars`. To make it safe for multi-engineer teams, I configured encrypted remote state storage in **Amazon S3** with **DynamoDB state locking** to prevent concurrent state corruption, enforced **IMDSv2** on EC2 instances to block SSRF credential theft, and built a **GitHub Actions** pull-request pipeline using keyless **AWS OIDC** authentication to run `terraform fmt`, `validate`, and a speculative `plan` before any code can merge to `main`."*
+**Required Notice:** Copyright (c) 2026 Adam Dryden (`Phlotonic`) — Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+
+## 1. Executive Architecture Summary
+This module implements a modular **HashiCorp Terraform** architecture paired with an automated **GitHub Actions** pull-request validation pipeline. Infrastructure resources are decoupled into three reusable child modules—`networking`, `security`, and `compute`—wired via strongly typed outputs and parameterized through `terraform.tfvars`. Concurrent state corruption is prevented using an encrypted **Amazon S3** remote backend with **DynamoDB state locking**. Compute instances resolve the latest patched Amazon Linux 2023 AMI dynamically via AWS SSM Parameter Store and enforce **IMDSv2** (`http_tokens = "required"`), while the CI pipeline authenticates via short-lived **AWS OIDC** tokens to execute `terraform fmt`, `validate`, and speculative `plan` checks on every pull request.
 
 ---
 
-## 2. Visual Architecture Diagram
+## 2. CI/CD & Module Dependency Architecture
 
 ```mermaid
 flowchart LR
-    PR["GitHub Pull Request"] --> GHA["GitHub Actions CI<br/>(Keyless AWS OIDC)"]
+    PR["GitHub Pull Request"] --> GHA["GitHub Actions Runner<br/>(Keyless AWS OIDC AssumeRole)"]
     GHA --> Checks["1. terraform fmt -check<br/>2. terraform validate<br/>3. terraform plan"]
 
     subgraph State["Remote State & Locking Backend"]
-        S3["Amazon S3 Bucket<br/>(Encrypted terraform.tfstate)"]
-        DDB["Amazon DynamoDB<br/>(State Lock Table)"]
+        S3["Amazon S3 Bucket<br/>(AES-256 Encrypted terraform.tfstate)"]
+        DDB["Amazon DynamoDB<br/>(Concurrent State Lock Table)"]
     end
 
     Checks <--> State
 
     subgraph Modules["Modular Terraform Graph (main.tf)"]
-        Net["modules/networking<br/>(VPC + cidrsubnet())"] -- "vpc_id" --> Sec["modules/security<br/>(Least-Privilege SG)"]
+        Net["modules/networking<br/>(VPC + cidrsubnet())"] -- "vpc_id" --> Sec["modules/security<br/>(Least-Privilege HTTPS SG)"]
         Net -- "private_subnet_id" --> Comp["modules/compute<br/>(SSM AL2023 AMI + IMDSv2)"]
         Sec -- "app_sg_id" --> Comp
     end
@@ -30,31 +32,34 @@ flowchart LR
 
 ---
 
-## 3. Component-by-Component Breakdown
+## 3. Component & Configuration Specification
 
-| File | What It Does in Plain English | Why Hiring Managers & Clients Care |
+| Artifact | Functional Role | Production Engineering Rationale |
 | :--- | :--- | :--- |
-| [`main.tf`](./main.tf) & [`terraform.tfvars.example`](./terraform.tfvars.example) | Root orchestrator declaring the S3/DynamoDB backend and passing variables into the 3 child modules. | Shows you separate environment configuration (`tfvars`) from reusable infrastructure logic (`modules`). |
-| [`modules/networking/main.tf`](./modules/networking/main.tf) | Creates the VPC and calculates subnet CIDRs dynamically with `cidrsubnet(var.vpc_cidr, 8, 10)`. | Using `cidrsubnet()` means a client can change `vpc_cidr` once and all child subnets recalculate automatically without IP math errors. |
-| [`modules/compute/main.tf`](./modules/compute/main.tf) | Queries AWS SSM Parameter Store for the latest patched Amazon Linux 2023 AMI and enforces IMDSv2 (`http_tokens = "required"`). | Never hardcodes regional AMI IDs that go stale, and blocks SSRF metadata attacks (like the Capital One breach vector) by requiring session tokens. |
-| [`workflows/terraform-pr.yml`](./workflows/terraform-pr.yml) | Automated GitHub Actions workflow using short-lived OIDC tokens (`id-token: write`). | Eliminates long-lived `AWS_ACCESS_KEY_ID` secrets stored in GitHub—the gold standard for modern DevSecOps pipelines. |
+| [`main.tf`](./main.tf) & [`terraform.tfvars.example`](./terraform.tfvars.example) | Root module configuring the S3/DynamoDB backend and composing the three child modules. | Separates environment-specific inputs (`tfvars`) from reusable infrastructure definitions (`modules/*`). |
+| [`modules/networking/main.tf`](./modules/networking/main.tf) | Provisions the VPC and computes child subnet CIDRs dynamically via `cidrsubnet(var.vpc_cidr, 8, 10)`. | Eliminates manual subnet CIDR collisions when deploying across multiple environments. |
+| [`modules/compute/main.tf`](./modules/compute/main.tf) | Queries AWS SSM Parameter Store for the latest Amazon Linux 2023 AMI and enforces IMDSv2 (`http_tokens = "required"`). | Avoids hardcoded regional AMI IDs and mitigates SSRF instance metadata credential theft vectors. |
+| [`workflows/terraform-pr.yml`](./workflows/terraform-pr.yml) | GitHub Actions workflow using `aws-actions/configure-aws-credentials@v4` with OIDC (`id-token: write`). | Eliminates static, long-lived AWS IAM access keys stored in CI secrets. |
 
 ---
 
-## 4. Top 3 Technical Interview Questions & Ready Answers
+## 4. Key Architectural Design Decisions
 
-1. **Q: What happens if two DevOps engineers run `terraform apply` at the exact same time against the same environment, and how did you prevent it?**
-   - **A:** *"Without state locking, concurrent applies can overwrite `terraform.tfstate` and corrupt or orphan cloud resources. I configured an S3 backend paired with a DynamoDB table (`dynamodb_table = "quanumis-terraform-state-locks"`). Before Terraform modifies state, it acquires a conditional write lock in DynamoDB; the second engineer's run immediately fails with a lock-held message until the first run finishes."*
-2. **Q: Why did your GitHub Actions workflow use `aws-actions/configure-aws-credentials@v4` with `role-to-assume` (OIDC) instead of storing AWS IAM access keys in GitHub Secrets?**
-   - **A:** *"Static IAM access keys never expire unless manually rotated and are a major leak risk if a repo or CI runner is compromised. With OpenID Connect (OIDC), GitHub Actions exchanges a cryptographically signed JWT with AWS STS to assume an IAM role for a short-lived session (e.g., 15 minutes), so zero static AWS keys ever exist in GitHub."*
-3. **Q: How does Terraform know to create `module.networking` and `module.security` before `module.compute` without using `depends_on`?**
-   - **A:** *"Terraform builds an implicit dependency graph by analyzing variable references. Because `module.compute` takes `subnet_id = module.networking.private_subnet_id` and `security_group_id = module.security.app_sg_id`, Terraform automatically provisions the VPC, Subnet, and Security Group first and passes their output IDs into the EC2 module."*
+1. **How does the S3 + DynamoDB backend protect state integrity in multi-engineer environments?**
+   - Before executing any state operation, Terraform writes a conditional lock item (`LockID`) to the DynamoDB table (`quanumis-terraform-state-locks`). Concurrent runs against the same environment fail safely until the active lock is released, preventing state overwrites.
+2. **Why does the GitHub Actions workflow use OpenID Connect (OIDC) instead of static IAM credentials?**
+   - With OIDC, the GitHub Actions runner exchanges a cryptographically signed JWT directly with AWS STS (`AssumeRoleWithWebIdentity`) for an ephemeral session token scoped to the pull request run, ensuring zero static credentials can be leaked from repository secrets.
+3. **Why is `http_tokens = "required"` enforced in `metadata_options` on `aws_instance`?**
+   - Requiring session-oriented Instance Metadata Service v2 (IMDSv2) forces callers to issue a `PUT` request with an `X-aws-ec2-metadata-token-ttl-seconds` header before reading metadata, blocking Server-Side Request Forgery (SSRF) attacks from extracting IAM role credentials.
 
 ---
 
-## 5. Quick 10-Minute Review Checklist
-- **Sun–Wed Evening (5-Minute Bite-Sized Check):**
-  1. Run [`validate-lab.ps1`](./validate-lab.ps1) to verify all 7 modular Terraform and CI checks pass.
-  2. Read the **30-Second Pitch** and **3 Interview Q&As** above.
-- **Thu–Sat Off-Day (Optional Local Terraform CLI Check):**
-  1. Run `terraform fmt -check -recursive` and `terraform init -backend=false && terraform validate` inside `05-terraform-modular-pipeline`.
+## 5. Deployment & Verification Runbook
+
+```powershell
+# 1. Render parameterized Terraform inputs
+powershell -NoProfile -ExecutionPolicy Bypass -File .\render-template.ps1
+
+# 2. Execute automated module structure, state lock, IMDSv2 & CI workflow validation
+powershell -NoProfile -ExecutionPolicy Bypass -File .\validate-lab.ps1
+```

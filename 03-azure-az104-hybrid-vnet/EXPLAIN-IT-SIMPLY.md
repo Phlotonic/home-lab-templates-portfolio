@@ -1,25 +1,27 @@
-# Lab 3 (Microsoft Azure AZ-104): Explain It Simply & Interview Guide
+# Module 03 (Microsoft Azure AZ-104): Multi-Region Hub-Spoke Landing Zone with Azure Bastion & Key Vault RBAC
 
-## 1. Your 30-Second Plain-English Pitch (For Interviews & Clients)
-> *"I engineered a multi-region Azure Hub-and-Spoke architecture in **Bicep** spanning `eastus` and `westus2` connected via Global VNet Peering. To eliminate public attack surface, the Linux workload VM in `westus2` has **zero public IP addresses** and sits behind a strict Network Security Group that only accepts SSH traffic from **Azure Bastion** in the Hub VNet over TLS 443. Finally, I enabled a **System-Assigned Managed Identity** on the VM with least-privilege RBAC (`Key Vault Secrets User`) to pull database connection strings from **Azure Key Vault**, and enforced **Microsoft Entra ID Conditional Access MFA** across the Azure Resource Manager control plane."*
+**Required Notice:** Copyright (c) 2026 Adam Dryden (`Phlotonic`) — Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+
+## 1. Executive Architecture Summary
+This module provisions a multi-region Azure Hub-and-Spoke landing zone in **Bicep** spanning `eastus` (Hub) and `westus2` (Spoke) connected via bidirectional Global VNet Peering. To eliminate public IP exposure on compute workloads, the Linux VM in `westus2` is deployed with **zero public IP addresses** behind a restrictive Network Security Group (NSG) that permits inbound SSH (`TCP 22`) exclusively from the **Azure Bastion Standard** subnet (`10.10.0.0/26`) in the Hub VNet. Operational secrets are stored in **Azure Key Vault** using role-based access control (`enableRbacAuthorization: true`) and consumed via a **System-Assigned Managed Identity**, while administrative access to Azure Resource Manager is protected by **Microsoft Entra ID Conditional Access MFA**.
 
 ---
 
-## 2. Visual Architecture Diagram
+## 2. Multi-Region Hub-Spoke Topology
 
 ```mermaid
 flowchart LR
-    Admin["Cloud Admin Browser<br/>(Entra ID MFA Required)"] -- "TLS 443" --> Bastion["Azure Bastion (Standard)<br/>10.10.0.0/26"]
+    Admin["Administrator Session<br/>(Entra ID Conditional Access MFA)"] -- "TLS 443" --> Bastion["Azure Bastion (Standard SKU)<br/>10.10.0.0/26"]
 
-    subgraph Hub["Primary Region: East US (vnet-hub-eastus 10.10.0.0/16)"]
+    subgraph Hub["Primary Hub Region: East US (vnet-hub-eastus 10.10.0.0/16)"]
         Bastion
-        KV["Azure Key Vault<br/>(RBAC Enabled, Soft-Delete 90d)"]
+        KV["Azure Key Vault<br/>(RBAC Enabled, 90-Day Soft Delete)"]
     end
 
-    Hub <-- "Global VNet Peering (Backbone)" --> Spoke
+    Hub <-- "Global VNet Peering (Azure Backbone)" --> Spoke
 
-    subgraph Spoke["Secondary Region: West US 2 (vnet-spoke-westus2 10.20.0.0/16)"]
-        NSG["NSG: Allow SSH (22) ONLY<br/>from 10.10.0.0/26"] --> VM["Private Linux VM (Zero Public IP)<br/>System-Assigned Managed Identity"]
+    subgraph Spoke["Secondary Spoke Region: West US 2 (vnet-spoke-westus2 10.20.0.0/16)"]
+        NSG["NSG: Allow TCP 22 ONLY<br/>from 10.10.0.0/26"] --> VM["Private Linux VM (Zero Public IP)<br/>System-Assigned Managed Identity"]
     end
 
     VM -. "Key Vault Secrets User Role" .-> KV
@@ -27,30 +29,33 @@ flowchart LR
 
 ---
 
-## 3. Component-by-Component Breakdown
+## 3. Component & Configuration Specification
 
-| File | What It Does in Plain English | Why Hiring Managers & Clients Care |
+| Artifact | Functional Role | Production Engineering Rationale |
 | :--- | :--- | :--- |
-| [`main.bicep`](./main.bicep) | Declarative Azure Bicep template provisioning Hub/Spoke VNets, Global Peering, NSG, Bastion, Private VM, Key Vault, and RBAC roles. | Bicep is Microsoft's modern replacement for verbose ARM JSON templates—writing clean Bicep proves real Azure engineering maturity. |
-| [`configure-entra-and-secrets.sh`](./configure-entra-and-secrets.sh) | Deploys the stack, injects secrets into Key Vault, and creates an Entra ID Conditional Access MFA policy via Microsoft Graph API. | Shows you secure both the **network plane** (Bastion/NSG) and the **identity plane** (Entra ID Conditional Access + Managed Identity). |
-| [`template-variables.json`](./template-variables.json) | Reusable parameters for regions, CIDR blocks, and VM SKUs. | Makes the Hub-Spoke landing zone immediately reusable across client subscriptions. |
+| [`main.bicep`](./main.bicep) | Declarative Azure Bicep template provisioning Hub/Spoke VNets, Global Peering, NSG, Azure Bastion, Private VM, Key Vault, and RBAC role assignments. | Enforces repeatable multi-region infrastructure deployment with compile-time type safety and idempotent resource definitions. |
+| [`configure-entra-and-secrets.sh`](./configure-entra-and-secrets.sh) | Deployment orchestrator that provisions the Bicep stack, injects connection strings into Key Vault, and creates an Entra ID Conditional Access MFA policy via Microsoft Graph. | Secures both the network data plane (Bastion + NSG) and the identity control plane (Conditional Access + Managed Identity). |
+| [`template-variables.json`](./template-variables.json) | Parameterized configuration for Azure regions, VNet address spaces, and VM SKUs. | Enables rapid adaptation across enterprise subscriptions and regional topologies. |
 
 ---
 
-## 4. Top 3 Technical Interview Questions & Ready Answers
+## 4. Key Architectural Design Decisions
 
-1. **Q: Why did you use Azure Key Vault with RBAC (`enableRbacAuthorization: true`) instead of legacy Key Vault Access Policies?**
-   - **A:** *"Legacy Vault Access Policies are an all-or-nothing permission model at the vault level and don't integrate cleanly with Azure PIM or granular scope inheritance. Enabling Azure RBAC lets me assign `Key Vault Secrets Officer` to administrators while granting the VM's System-Assigned Managed Identity the read-only `Key Vault Secrets User` role (`4633458b-17de-408a-b874-0445c86b69e6`) following strict least privilege."*
-2. **Q: Why must both `peer-hub-to-spoke` and `peer-spoke-to-hub` resources be created in Bicep for Global VNet Peering?**
-   - **A:** *"In Azure, VNet peering is a two-way handshake—each VNet must explicitly declare a peering link pointing to the remote VNet's resource ID before the peering status transitions from `Initiated` to `Connected`."*
-3. **Q: How does the administrator SSH into the `westus2` VM if it has no public IP address and lives in a different region from Azure Bastion?**
-   - **A:** *"Azure Bastion Standard SKU supports peering across Global VNet Peering. The admin authenticates to the Azure Portal with Entra ID MFA over HTTPS (port 443), connects to the Bastion host in `eastus` (`10.10.0.0/26`), and Bastion tunnels the SSH session privately across the Microsoft backbone to `10.20.1.0/24` in `westus2`, where the NSG explicitly permits port 22 only from `10.10.0.0/26`."*
+1. **Why is Azure Key Vault configured with Azure RBAC (`enableRbacAuthorization: true`) rather than legacy Vault Access Policies?**
+   - Azure RBAC provides granular, scope-Aware access control integrated with Privileged Identity Management (PIM). Administrators receive `Key Vault Secrets Officer` (`b86a8fe4-44ce-4948-aee5-eccb2c155cd7`), whereas the workload VM's System-Assigned Managed Identity is restricted to the read-only `Key Vault Secrets User` role (`4633458b-17de-408a-b874-0445c86b69e6`).
+2. **Why must both `peer-hub-to-spoke` and `peer-spoke-to-hub` resources be explicitly declared in Bicep?**
+   - Azure VNet Peering requires reciprocal resource links from each virtual network to the remote VNet's resource ID before the peering state transitions to `Connected` and routes traffic over the Microsoft backbone.
+3. **How is administrative SSH access achieved across regions without assigning a public IP to the Spoke VM?**
+   - Azure Bastion Standard SKU supports cross-region connectivity over Global VNet Peering. Administrators authenticate via the Azure Portal over TLS 443 to the Bastion host in `eastus`, which brokers an encrypted SSH session across the peering link to `10.20.1.0/24` in `westus2`.
 
 ---
 
-## 5. Quick 10-Minute Review Checklist
-- **Sun–Wed Evening (5-Minute Bite-Sized Check):**
-  1. Run [`validate-lab.ps1`](./validate-lab.ps1) to verify all 7 Azure Bicep and Zero-Trust checks pass.
-  2. Read the **30-Second Pitch** and **3 Interview Q&As** above.
-- **Thu–Sat Off-Day (Optional Hands-On Azure CLI Drill):**
-  1. Run `az bicep build --file main.bicep` locally to inspect compiled ARM output, or deploy into a test Azure subscription and tear down via `az group delete --name rg-az104-hybrid-lab --yes`.
+## 5. Deployment & Verification Runbook
+
+```powershell
+# 1. Render parameterized Azure landing zone inputs
+powershell -NoProfile -ExecutionPolicy Bypass -File .\render-template.ps1
+
+# 2. Execute automated Bicep security, peering & RBAC compliance checks
+powershell -NoProfile -ExecutionPolicy Bypass -File .\validate-lab.ps1
+```
