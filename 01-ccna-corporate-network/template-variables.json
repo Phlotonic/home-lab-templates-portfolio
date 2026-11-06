@@ -1,0 +1,28 @@
+{
+  "organizationDomain": "corp.quanumis.lab",
+  "adminUsername": "netadmin",
+  "enableSecretPlaceholder": "<REPLACE_WITH_ENABLE_SECRET>",
+  "adminPasswordPlaceholder": "<REPLACE_WITH_ADMIN_PASSWORD>",
+  "wanSubnetPrefix": "10.255.255",
+  "simulatedIspIp": "203.0.113.1",
+  "siteA": {
+    "routerHostname": "HQ-R1",
+    "switchHostname": "HQ-SW1",
+    "loopbackIp": "10.10.255.1",
+    "transitPrefix": "10.10.0",
+    "vlan10Prefix": "10.10.10",
+    "vlan20Prefix": "10.10.20",
+    "vlan30Prefix": "10.10.30",
+    "vlan99Prefix": "10.10.99"
+  },
+  "siteB": {
+    "routerHostname": "BR-R1",
+    "switchHostname": "BR-SW1",
+    "loopbackIp": "10.20.255.1",
+    "transitPrefix": "10.20.0",
+    "vlan10Prefix": "10.20.10",
+    "vlan20Prefix": "10.20.20",
+    "vlan30Prefix": "10.20.30",
+    "vlan99Prefix": "10.20.99"
+  }
+}

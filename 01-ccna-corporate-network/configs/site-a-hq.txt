@@ -1,0 +1,243 @@
+! =====================================================================
+! Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+! Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+! Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+! =====================================================================
+! DEVICE 1: HQ-R1 (Cisco ISR 4321 Edge Router - Site A Headquarters)
+! =====================================================================
+enable
+configure terminal
+hostname HQ-R1
+no ip domain-lookup
+ip domain-name corp.quanumis.lab
+service password-encryption
+
+! Local Admin Account & Enable Secret
+enable algorithm-type scrypt secret StrongEnableSecret#2026!
+username netadmin privilege 15 algorithm-type scrypt secret StrongAdminPass#2026!
+
+! Generate 2048-bit RSA Keys & Enforce SSHv2
+crypto key generate rsa general-keys modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+! Loopback0 for Router-ID and Management Reachability
+interface Loopback0
+ description HQ-R1-RouterID-and-Mgmt
+ ip address 10.10.255.1 255.255.255.255
+Exit
+
+! Point-to-Point WAN Link to Site B (BR-R1)
+interface GigabitEthernet0/0/0
+ description P2P-WAN-TO-BR-R1
+ ip address 10.255.255.1 255.255.255.252
+ ip ospf network point-to-point
+ no shutdown
+Exit
+
+! Downlink to HQ Layer 3 Core Switch (HQ-SW1)
+interface GigabitEthernet0/0/1
+ description TRANSIT-TO-HQ-SW1
+ ip address 10.10.0.1 255.255.255.252
+ ip ospf network point-to-point
+ no shutdown
+Exit
+
+! Simulated ISP Egress Loopback
+interface Loopback100
+ description SIMULATED-INTERNET-EGRESS
+ ip address 203.0.113.1 255.255.255.252
+Exit
+
+! OSPF Process 1 Configuration
+router ospf 1
+ router-id 10.10.255.1
+ passive-interface Loopback0
+ passive-interface Loopback100
+ network 10.10.0.0 0.0.0.3 area 0
+ network 10.10.255.1 0.0.0.0 area 0
+ network 10.255.255.0 0.0.0.3 area 0
+ default-information originate always
+Exit
+
+! VTY Access Control List (Block Guest Wi-Fi from SSH Management)
+ip access-list standard VTY-ADMIN-ALLOW
+ deny   10.10.30.0 0.0.0.255
+ deny   10.20.30.0 0.0.0.255
+ permit 10.10.10.0 0.0.0.255
+ permit 10.10.99.0 0.0.0.255
+ permit 10.20.10.0 0.0.0.255
+ permit 10.20.99.0 0.0.0.255
+ deny   any log
+Exit
+
+! Enforce SSHv2 and Disable Telnet on All Administrative Lines
+line con 0
+ login local
+ exec-timeout 5 0
+ logging synchronous
+line vty 0 15
+ access-class VTY-ADMIN-ALLOW in
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ logging synchronous
+Exit
+end
+write memory
+
+
+! =====================================================================
+! DEVICE 2: HQ-SW1 (Cisco Catalyst 3650 Layer 3 Switch - Site A HQ)
+! =====================================================================
+enable
+configure terminal
+hostname HQ-SW1
+no ip domain-lookup
+ip domain-name corp.quanumis.lab
+service password-encryption
+ip routing
+
+enable algorithm-type scrypt secret StrongEnableSecret#2026!
+username netadmin privilege 15 algorithm-type scrypt secret StrongAdminPass#2026!
+
+crypto key generate rsa general-keys modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+! Create Three Functional VLANs + Management/Server VLAN
+vlan 10
+ name CORP_WORKSTATIONS
+vlan 20
+ name IOT_AND_PRINTERS
+vlan 30
+ name GUEST_WIFI
+vlan 99
+ name MGMT_AND_SERVERS
+Exit
+
+! Routed Uplink to HQ-R1
+interface GigabitEthernet1/0/1
+ description ROUTED-UPLINK-TO-HQ-R1
+ no switchport
+ ip address 10.10.0.2 255.255.255.252
+ ip ospf network point-to-point
+ no shutdown
+Exit
+
+! Access Ports for Corporate Workstations (VLAN 10)
+interface range GigabitEthernet1/0/2 - 10
+ description CORP-WORKSTATION-PORTS
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ no shutdown
+Exit
+
+! Access Ports for IoT & Printers (VLAN 20)
+interface range GigabitEthernet1/0/11 - 16
+ description IOT-AND-PRINTER-PORTS
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+ no shutdown
+Exit
+
+! Access Ports for Guest Wi-Fi APs (VLAN 30)
+interface range GigabitEthernet1/0/17 - 20
+ description GUEST-WIFI-AP-PORTS
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ no shutdown
+Exit
+
+! Access Ports for Internal Servers & Management (VLAN 99)
+interface range GigabitEthernet1/0/21 - 24
+ description INTERNAL-SERVERS-MGMT
+ switchport mode access
+ switchport access vlan 99
+ spanning-tree portfast
+ no shutdown
+Exit
+
+! Extended ACL Preventing Guest Wi-Fi (VLAN 30) from Reaching Internal Subnets or Management IPs
+ip access-list extended RESTRICT-GUEST-WIFI
+ remark Allow Guest DNS and DHCP to Gateway
+ permit udp 10.10.30.0 0.0.0.255 host 203.0.113.1 eq domain
+ remark Explicitly Block Guest Access to HQ and Branch Management/Server Subnets
+ deny   ip 10.10.30.0 0.0.0.255 10.10.99.0 0.0.0.255 log
+ deny   ip 10.10.30.0 0.0.0.255 10.20.99.0 0.0.0.255 log
+ deny   ip 10.10.30.0 0.0.0.255 host 10.10.255.1 log
+ deny   ip 10.10.30.0 0.0.0.255 host 10.20.255.1 log
+ remark Block Guest Access to All Internal RFC1918 Corporate & IoT Networks
+ deny   ip 10.10.30.0 0.0.0.255 10.0.0.0 0.255.255.255 log
+ deny   ip 10.10.30.0 0.0.0.255 172.16.0.0 0.15.255.255 log
+ deny   ip 10.10.30.0 0.0.0.255 192.168.0.0 0.0.255.255 log
+ remark Permit Guest Internet-Only Egress
+ permit ip 10.10.30.0 0.0.0.255 any
+Exit
+
+! Layer 3 Switched Virtual Interfaces (SVIs) for Inter-VLAN Routing
+interface Vlan10
+ description SVI-CORP-WORKSTATIONS
+ ip address 10.10.10.1 255.255.255.0
+ no shutdown
+Exit
+
+interface Vlan20
+ description SVI-IOT-AND-PRINTERS
+ ip address 10.10.20.1 255.255.255.0
+ no shutdown
+Exit
+
+interface Vlan30
+ description SVI-GUEST-WIFI
+ ip address 10.10.30.1 255.255.255.0
+ ip access-group RESTRICT-GUEST-WIFI in
+ no shutdown
+Exit
+
+interface Vlan99
+ description SVI-MGMT-AND-SERVERS
+ ip address 10.10.99.1 255.255.255.0
+ no shutdown
+Exit
+
+! OSPF Routing on Layer 3 Switch
+router ospf 1
+ router-id 10.10.99.1
+ passive-interface default
+ no passive-interface GigabitEthernet1/0/1
+ network 10.10.0.0 0.0.0.3 area 0
+ network 10.10.10.0 0.0.0.255 area 0
+ network 10.10.20.0 0.0.0.255 area 0
+ network 10.10.30.0 0.0.0.255 area 0
+ network 10.10.99.0 0.0.0.255 area 0
+Exit
+
+ip access-list standard VTY-ADMIN-ALLOW
+ deny   10.10.30.0 0.0.0.255
+ deny   10.20.30.0 0.0.0.255
+ permit 10.10.10.0 0.0.0.255
+ permit 10.10.99.0 0.0.0.255
+ permit 10.20.10.0 0.0.0.255
+ permit 10.20.99.0 0.0.0.255
+ deny   any log
+Exit
+
+line con 0
+ login local
+ exec-timeout 5 0
+ logging synchronous
+line vty 0 15
+ access-class VTY-ADMIN-ALLOW in
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ logging synchronous
+Exit
+end
+write memory

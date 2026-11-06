@@ -1,0 +1,21 @@
+# Secrets & Environment Variables
+.env
+*.env.local
+*secret*
+*.pem
+*.key
+*.pfx
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+
+# OS & Editor Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
