@@ -1,12 +1,9 @@
 # Cascading R&D Portfolio Autopilot — Control Center
 
 > [!TIP]
-> **Morning Wake-Up Brief (Latest Run: Stage 1 + Commercial Dual-License Completed)**
-> - **What Was Built & Protected:**
->   - **Commercial Dual-Licensing:** [`LICENSE`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/LICENSE) (PolyForm Noncommercial 1.0.0 for recruiters/personal evaluation) + [`COMMERCIAL-LICENSE.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/COMMERCIAL-LICENSE.md) (3 paid tiers: \$299 Single-Company, \$999 MSP Multi-Client, and Custom Enterprise/Consulting Retainer).
->   - **Stage 1 Reusable Template (`01-ccna-corporate-network`):** Parameterized via [`template-variables.json`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/01-ccna-corporate-network/template-variables.json) and [`render-template.ps1`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/01-ccna-corporate-network/render-template.ps1), stamped with copyright headers, and verified (`9/9` checks passing in [`validate-lab.ps1`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/01-ccna-corporate-network/validate-lab.ps1)).
->   - **Plain-English Interview Guide:** [`01-ccna-corporate-network/EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/01-ccna-corporate-network/EXPLAIN-IT-SIMPLY.md)
-> - **Up Next (Next 2:00 AM Run):** Stage 2 (`02-security-plus-wazuh-soc` — CompTIA Security+ Wazuh SIEM, Sysmon Telemetry, Atomic Red Team scripts, Incident Triage Report, reusable template parameters, and automatic GitHub push).
+> **Morning Wake-Up Brief (All 6 Stages Completed, Verified & Pushed to GitHub!)**
+> - **100% Portfolio Completion (`44/44` Checks Passing):** All 6 Certification Home Lab Templates (`01-ccna-corporate-network` through `06-cka-kubernetes-chaos-cluster`) are now fully built, parameterized, stamped with your commercial dual-license copyright headers, verified via [`validate-all.ps1`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/validate-all.ps1), and pushed live to [https://github.com/Phlotonic/home-lab-templates-portfolio](https://github.com/Phlotonic/home-lab-templates-portfolio).
+> - **Zero-Waste Standby Active:** Because all 6 stages are now `Completed & Verified`, your 2:00 AM **Cascading R&D Portfolio Autopilot** will automatically enter **Zero-Waste Standby Mode** unless you drop a new R&D note or enhancement request in **Section 3** below!
 
 ---
 
@@ -14,28 +11,28 @@
 
 | Stage | Folder | Certification & Target Role | Status | Key Reusable Deliverables | Plain-English Guide |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Stage 1** | `01-ccna-corporate-network` | **Cisco CCNA (200-301)**<br/>Remote Network / NOC Engineer | **Completed & Verified** | `template-variables.json`, `render-template.ps1`, `configs/site-a-hq.txt`, `configs/site-b-branch.txt`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/01-ccna-corporate-network/EXPLAIN-IT-SIMPLY.md) |
-| **Stage 2** | `02-security-plus-wazuh-soc` | **CompTIA Security+**<br/>Remote SOC Analyst Tier 1 | **Next Up (Queued for 2:00 AM)** | `template-variables.json`, `render-template.ps1`, `deploy-soc.sh`, `local_rules.xml`, `run-atomic-tests.ps1`, `INC-2026-1104-Triage-Report.md`, `validate-lab.ps1` | *Will be generated next run* |
-| **Stage 3** | `03-azure-az104-hybrid-vnet` | **Microsoft Azure AZ-104**<br/>Remote Azure Administrator | **Pending Cascade** | `template-variables.json`, `main.bicep`, `configure-entra-and-secrets.sh`, `validate-lab.ps1` | *Pending* |
-| **Stage 4** | `04-aws-saa-three-tier-ha` | **AWS SAA-C03**<br/>Remote Cloud Solutions Architect | **Pending Cascade** | `template-variables.json`, `aws-three-tier-ha.yaml`, `run-failover-drill.sh`, `validate-lab.ps1` | *Pending* |
-| **Stage 5** | `05-terraform-modular-pipeline` | **HashiCorp Terraform Associate**<br/>Remote Jr. DevOps / IaC Engineer | **Pending Cascade** | `terraform.tfvars.example`, `main.tf`, `modules/{networking,security,compute}`, `.github/workflows/terraform-pr.yml`, `validate-lab.ps1` | *Pending* |
-| **Stage 6** | `06-cka-kubernetes-chaos-cluster` | **Kubernetes CKA**<br/>Remote Platform / SRE Engineer | **Pending Cascade** | `template-variables.json`, `bootstrap-kubeadm.sh`, `cluster-workloads.yaml`, `CKA-Break-Fix-Runbook.md`, `validate-lab.ps1` | *Pending* |
+| **Stage 1** | [`01-ccna-corporate-network`](./01-ccna-corporate-network) | **Cisco CCNA (200-301)**<br/>Remote Network / NOC Engineer | **Completed & Verified (9/9)** | `template-variables.json`, `render-template.ps1`, `configs/site-a-hq.txt`, `configs/site-b-branch.txt`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/01-ccna-corporate-network/EXPLAIN-IT-SIMPLY.md) |
+| **Stage 2** | [`02-security-plus-wazuh-soc`](./02-security-plus-wazuh-soc) | **CompTIA Security+**<br/>Remote SOC Analyst Tier 1 | **Completed & Verified (7/7)** | `template-variables.json`, `render-template.ps1`, `deploy-soc.sh`, `install-sysmon-agent.ps1`, `rules/local_rules.xml`, `run-atomic-tests.ps1`, `reports/INC-2026-1104-Triage-Report.md`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/02-security-plus-wazuh-soc/EXPLAIN-IT-SIMPLY.md) |
+| **Stage 3** | [`03-azure-az104-hybrid-vnet`](./03-azure-az104-hybrid-vnet) | **Microsoft Azure AZ-104**<br/>Remote Azure Administrator | **Completed & Verified (7/7)** | `template-variables.json`, `render-template.ps1`, `main.bicep`, `configure-entra-and-secrets.sh`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/03-azure-az104-hybrid-vnet/EXPLAIN-IT-SIMPLY.md) |
+| **Stage 4** | [`04-aws-saa-three-tier-ha`](./04-aws-saa-three-tier-ha) | **AWS SAA-C03**<br/>Remote Cloud Solutions Architect | **Completed & Verified (7/7)** | `template-variables.json`, `render-template.ps1`, `aws-three-tier-ha.yaml`, `run-failover-drill.sh`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/04-aws-saa-three-tier-ha/EXPLAIN-IT-SIMPLY.md) |
+| **Stage 5** | [`05-terraform-modular-pipeline`](./05-terraform-modular-pipeline) | **HashiCorp Terraform Associate**<br/>Remote Jr. DevOps / IaC Engineer | **Completed & Verified (7/7)** | `terraform.tfvars.example`, `template-variables.json`, `render-template.ps1`, `main.tf`, `modules/{networking,security,compute}`, `.github/workflows/terraform-pr.yml`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/05-terraform-modular-pipeline/EXPLAIN-IT-SIMPLY.md) |
+| **Stage 6** | [`06-cka-kubernetes-chaos-cluster`](./06-cka-kubernetes-chaos-cluster) | **Kubernetes CKA**<br/>Remote Platform / SRE Engineer | **Completed & Verified (7/7)** | `template-variables.json`, `render-template.ps1`, `bootstrap-kubeadm.sh`, `cluster-workloads.yaml`, `CKA-Break-Fix-Runbook.md`, `validate-lab.ps1` | [`EXPLAIN-IT-SIMPLY.md`](file:///c:/Users/adryd/OneDrive/Documents/Adam/Work/Home%20Lab%20Templates%20Portfolio/06-cka-kubernetes-chaos-cluster/EXPLAIN-IT-SIMPLY.md) |
 
 ---
 
-## 2. How Your Overnight Autopilot Works
+## 2. How to Explain & Manage Any Stage in Under 10 Minutes
 
-1. **Zero-Effort Overnight Building & GitHub Sync (2:00 AM CST):**
-   - While you sleep, the **Cascading R&D Portfolio Autopilot** checks this file.
-   - Each night, it advances **one stage** in the table above—writing the parameterized template files, stamping your commercial copyright header, running `validate-lab.ps1`, generating `EXPLAIN-IT-SIMPLY.md`, updating `README.md`, and **automatically committing & pushing to `https://github.com/Phlotonic/home-lab-templates-portfolio`**.
-   - Once all 6 stages reach **Completed & Verified**, the automation enters **Zero-Waste Standby Mode** (stopping immediately unless you write a request below or edit a file).
-2. **Complementary to Your Work Schedule:**
-   - **Sun–Wed (Work Days, 7:30 AM – 6:00 PM):** Zero action needed during your shift. After 6:00 PM, you can spend just 5–10 minutes reading the new `EXPLAIN-IT-SIMPLY.md` pitch built and pushed the night before.
-   - **Thu–Sat (Off Days):** Your completed labs, dry-run validation scripts (`validate-lab.ps1`), and step-by-step guides are ready whenever you want to explore or test them hands-on.
+1. **Run the Master Audit (`validate-all.ps1`):**
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\validate-all.ps1
+   ```
+2. **Open Any Stage's `EXPLAIN-IT-SIMPLY.md` Guide:**
+   - **Sun–Wed Evenings (After 6:00 PM):** Spend 5 minutes reading one module's **30-Second Pitch** and **Top 3 Interview Q&As**.
+   - **Thu–Sat Off-Days:** Use the hands-on drill section in any `EXPLAIN-IT-SIMPLY.md` when you want to test or demo the lab live.
 
 ---
 
 ## 3. My R&D Notes & Requests (Optional Input for Next Overnight Run)
-*(Drop any bullet point, question, or customization request below before going to sleep—the 2:00 AM Autopilot will read this section first and build what you asked for!)*
+*(Drop any bullet point, new module idea, or customization request below before going to sleep—the 2:00 AM Autopilot will read this section first, build and verify it until complete, and push it to GitHub!)*
 
-- *(No custom requests currently queued — proceed with cascading Stage 2: `02-security-plus-wazuh-soc` on the next run.)*
+- *(All 6 core stages are complete. Add any custom R&D requests here when ready.)*

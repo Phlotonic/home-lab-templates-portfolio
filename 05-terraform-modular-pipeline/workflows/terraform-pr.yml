@@ -1,0 +1,54 @@
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+name: 'Terraform PR Validation & Speculative Plan'
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '05-terraform-modular-pipeline/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  terraform-ci:
+    name: 'Format, Validate & Plan'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 05-terraform-modular-pipeline
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup HashiCorp Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Check Canonical Formatting (terraform fmt)
+        run: terraform fmt -check -recursive
+
+      - name: Initialize Remote Backend & Modules (terraform init)
+        run: terraform init -input=false
+
+      - name: Validate Syntax & Module Types (terraform validate)
+        run: terraform validate -no-color
+
+      - name: Generate Speculative Execution Plan (terraform plan)
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: false

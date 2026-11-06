@@ -1,0 +1,10 @@
+# =====================================================================
+# Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+# Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+# Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+# =====================================================================
+aws_region         = "us-east-1"
+env_prefix         = "prod"
+vpc_cidr           = "10.50.0.0/16"
+allowed_ingress_ip = "203.0.113.50/32"
+instance_type      = "t3.micro"

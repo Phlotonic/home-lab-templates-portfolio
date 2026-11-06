@@ -1,0 +1,14 @@
+{
+  "wazuhVersion": "4.9",
+  "wazuhManagerIp": "10.10.99.10",
+  "monitoredEndpointHostname": "WKSTN-FIN-04",
+  "monitoredEndpointIp": "10.10.10.42",
+  "monitoredAgentId": "004",
+  "compromisedDomainUser": "CORP\\jdoe",
+  "sysmonConfigUrl": "https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml",
+  "mitreRules": {
+    "powershellExecutionRuleId": "100101",
+    "lsassCredentialDumpRuleId": "100102",
+    "registryPersistenceRuleId": "100103"
+  }
+}

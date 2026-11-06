@@ -1,0 +1,9 @@
+{
+  "awsRegion": "us-east-1",
+  "envPrefix": "prod",
+  "vpcCidr": "10.50.0.0/16",
+  "allowedIngressIp": "203.0.113.50/32",
+  "instanceType": "t3.micro",
+  "stateBucket": "quanumis-tfstate-production-lock-2026",
+  "lockDynamoDbTable": "quanumis-terraform-state-locks"
+}

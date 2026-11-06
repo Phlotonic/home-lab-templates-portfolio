@@ -1,0 +1,42 @@
+<!--
+=====================================================================
+Required Notice: Copyright (c) 2026 Adam Dryden (Phlotonic) (https://github.com/Phlotonic)
+Dual-Licensed under PolyForm Noncommercial 1.0.0 & Commercial License.
+Commercial or corporate use requires a paid license — see COMMERCIAL-LICENSE.md.
+=====================================================================
+Target Path on Wazuh Server: /var/ossec/etc/rules/local_rules.xml
+-->
+<group name="local,sysmon,atomic_red_team,">
+
+  <!-- Rule 100101: Suspicious Encoded PowerShell Command Execution (T1059.001) -->
+  <rule id="100101" level="12">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\\\(powershell|pwsh)\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(-enc|-encodedcommand|Invoke-Expression|IEX|DownloadString)</field>
+    <description>SOC Alert: Suspicious PowerShell Execution Detected via Sysmon Event ID 1</description>
+    <mitre>
+      <id>T1059.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Rule 100102: Credential Dumping via LSASS Process Access / MiniDump (T1003.001) -->
+  <rule id="100102" level="15">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(comsvcs\.dll.*MiniDump|procdump.*lsass|sekurlsa::logonpasswords)</field>
+    <description>CRITICAL SOC Alert: LSASS Memory Credential Dumping Attempt Detected</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Rule 100103: Registry Run Key Persistence Mechanism (T1547.001) -->
+  <rule id="100103" level="13">
+    <if_group>sysmon_event_13</if_group>
+    <field name="win.eventdata.targetObject" type="pcre2">(?i)\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\(Run|RunOnce)</field>
+    <description>SOC Alert: Registry Run Key Persistence Modification Detected via Sysmon Event ID 13</description>
+    <mitre>
+      <id>T1547.001</id>
+    </mitre>
+  </rule>
+
+</group>

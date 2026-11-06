@@ -1,0 +1,14 @@
+{
+  "resourceGroupName": "rg-az104-hybrid-lab",
+  "primaryLocation": "eastus",
+  "secondaryLocation": "westus2",
+  "hubVnetName": "vnet-hub-eastus",
+  "hubVnetCidr": "10.10.0.0/16",
+  "bastionSubnetCidr": "10.10.0.0/26",
+  "spokeVnetName": "vnet-spoke-westus2",
+  "spokeVnetCidr": "10.20.0.0/16",
+  "privateWorkloadSubnetCidr": "10.20.1.0/24",
+  "adminUsername": "azadmin",
+  "vmSize": "Standard_B1s",
+  "conditionalAccessPolicyName": "CA01-Require-MFA-For-Azure-Resource-Manager"
+}

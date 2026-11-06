@@ -1,0 +1,11 @@
+{
+  "kubernetesVersion": "v1.31",
+  "controlPlaneHostname": "k8s-cp-01",
+  "controlPlaneIp": "192.168.56.10",
+  "workerHostnames": ["k8s-worker-01", "k8s-worker-02"],
+  "podNetworkCidr": "192.168.0.0/16",
+  "calicoVersion": "v3.28.0",
+  "ingressNginxVersion": "controller-v1.11.1",
+  "persistentVolumeSize": "5Gi",
+  "ingressHost": "api.quanumis.lab"
+}
